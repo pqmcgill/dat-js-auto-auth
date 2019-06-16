@@ -1,0 +1,28 @@
+{
+  "name": "dat-js-auto-auth",
+  "version": "0.0.1",
+  "description": "Extension of (@pqmcgill/dat-js) that implements an opinionated networking strategy in which peers are automatically authorized as writers",
+  "main": "index.js",
+  "scripts": {
+    "build": "browserify -s AutoDat -e ./ | uglifyjs -c warnings=false > dat-js-auto-auth.min.js"
+  },
+  "keywords": [
+    "data",
+    "replication",
+    "javascript",
+    "dat",
+    "hyperdrive",
+    "hyperdb",
+    "p2p"
+  ],
+  "author": "Patrick McGill <https://github.com/pqmcgill>",
+  "license": "MIT",
+  "dependencies": {
+    "@pqmcgill/dat-js": "^8.0.2",
+    "dat-encoding": "^5.0.1"
+  },
+  "devDependencies": {
+    "browserify": "^16.2.3",
+    "uglify-es": "^3.3.9"
+  }
+}
