@@ -1,6 +1,8 @@
 const Dat = require('@pqmcgill/dat-js');
 const encoding = require('dat-encoding');
 
+module.exports =
+
 /**
  * Extends the Dat object to include a cache of connected users, and an
  * opinionated authorization strategy in which all connected peers are automatically
@@ -12,18 +14,37 @@ class AutoDat extends Dat {
 
     this.network = {};
 
-    const sw = this.swarm;
-    sw.on('connection', (peer, info) => {
+    this.swarm.on('connection', (peer, info) => {
       const discoveryKey = info.channel;
       const peerData = this._parseUserData(peer);
       this._authorize(peerData, discoveryKey, (err) => {
         if (err) throw new Error('could not authorize peer', err)
-        console.log('authorized peer: ', peerData);
-        this._addUser(info.channel, peerData);
+        this._addUser(info, peerData);
         peer.on('close', () => {
-          console.log('peer left: ', peerData);
-          this._removeUser(info.channel, peerData);
+          this._removeUser(info, peerData);
         })
+      })
+    })
+  }
+
+  /**
+   * helper method for listening to network events on an archive
+   */
+  onNetworkActivity(archive, cb) {
+    const networkKey = encoding.encode(archive.discoveryKey)
+    this.on(`join:${networkKey}`, (peer, peers) => {
+      cb({
+        type: 'join',
+        peer,
+        peers
+      })
+    })
+
+    this.on(`leave:${networkKey}`, (peer, peers) => {
+      cb({
+        type: 'leave',
+        peer,
+        peers
       })
     })
   }
@@ -35,7 +56,14 @@ class AutoDat extends Dat {
   _authorize(peerData, discoveryKey, cb) {
     const key = encoding.decode(peerData.key)
     const archive = this.archives.find(a => encoding.encode(a.discoveryKey) === discoveryKey)
-    if (!archive) throw new Error('attempting to authorize with an unknown archive', peerData.archiveKey)
+  
+    if (!archive) {
+      throw new Error(
+        'attempting to authorize with an unknown archive', 
+        peerData.archiveKey
+      )
+    }
+
     archive.ready(() => {
       archive.db.authorized(key, (err, auth) => {
         if (err) return cb(err)
@@ -52,19 +80,29 @@ class AutoDat extends Dat {
   /**
    * Adds a user to the users cache. Emits a "join" event with the peerData
    */
-  _addUser(channel, peerData) {
+  _addUser(info, userData) {
+    const { channel, id } = info;
+    const peerData = {
+      ...userData,
+      id
+    };
     if (!this.network[channel]) this.network[channel] = {};
-    if (this.network[channel][peerData.key]) return;
-    this.network[channel][peerData.key] = peerData
+    if (this.network[channel][id]) return;
+    this.network[channel][id] = peerData
     this.emit(`join:${channel}`, peerData, this.network[channel]);
   }
 
   /**
    * Removes a user from the users cache. Emits a "leave" event with the peerData
    */
-  _removeUser(channel, peerData) {
-    if (!this.network[channel] || !this.network[channel][peerData.key]) return;
-    delete this.network[channel][peerData.key];
+  _removeUser(info, userData) {
+    const { channel, id } = info;
+    const peerData = {
+      ...userData,
+      id
+    }
+    if (!this.network[channel] || !this.network[channel][id]) return;
+    delete this.network[channel][id];
     this.emit(`leave:${channel}`, peerData, this.network[channel]);
     if (Object.keys(this.network[channel]).length === 0) {
       delete this.network[channel];
