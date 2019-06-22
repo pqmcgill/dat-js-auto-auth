@@ -19,7 +19,7 @@
   "license": "MIT",
   "dependencies": {
     "@pqmcgill/dat-js": "^8.0.2",
-    "dat-encoding": "^5.0.1",
+    "dat-encoding": "^5.0.1"
   },
   "devDependencies": {
     "browserify": "^16.2.3",
