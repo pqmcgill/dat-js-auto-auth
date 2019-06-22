@@ -1,6 +1,6 @@
 {
   "name": "dat-js-auto-auth",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Extension of (@pqmcgill/dat-js) that implements an opinionated networking strategy in which peers are automatically authorized as writers",
   "main": "index.js",
   "scripts": {
