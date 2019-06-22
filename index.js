@@ -17,13 +17,15 @@ class AutoDat extends Dat {
     this.swarm.on('connection', (peer, info) => {
       const discoveryKey = info.channel;
       const peerData = this._parseUserData(peer);
-      this._authorize(peerData, discoveryKey, (err) => {
-        if (err) throw new Error('could not authorize peer', err)
-        this._addUser(info, peerData);
-        peer.on('close', () => {
-          this._removeUser(info, peerData);
+      if (peerData) {
+        this._authorize(peerData, discoveryKey, (err) => {
+          if (err) throw new Error('could not authorize peer', err)
+          this._addUser(info, peerData);
+          peer.on('close', () => {
+            this._removeUser(info, peerData);
+          })
         })
-      })
+      }
     })
   }
 
@@ -110,11 +112,11 @@ class AutoDat extends Dat {
   }
 
   /**
-   * Grabs the remoteUserData off of a given peer
+   * Grabs the remoteUserData off of a given peer. Returns false if userData was not found
    */
   _parseUserData(peer) {
     if (!peer.remoteUserData) {
-      throw new Error('peer does not have userData');
+      return false
     }
     return JSON.parse(peer.remoteUserData);
   }
